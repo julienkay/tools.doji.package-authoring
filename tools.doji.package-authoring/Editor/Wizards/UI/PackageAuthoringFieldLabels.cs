@@ -130,7 +130,7 @@ namespace Doji.PackageAuthoring.Wizards.UI {
             public static GUIContent CreateSignUpmPackageWorkflow { get; } =
                 EditorGUIUtility.TrTextContent(
                     "Create 'Sign UPM package' GitHub workflow",
-                    "Generates a GitHub Actions workflow that signs and releases the package when a version tag is pushed. " +
+                    "Generates a small caller for the shared signing and release workflow when a version tag is pushed. " +
                     "Requires the UPM_SERVICE_ACCOUNT_KEY_ID, UPM_SERVICE_ACCOUNT_KEY_SECRET, and UPM_ORG_ID GitHub Actions secrets.");
 
             public static GUIContent LicenseType { get; } =

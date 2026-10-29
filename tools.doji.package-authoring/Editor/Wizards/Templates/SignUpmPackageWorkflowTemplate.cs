@@ -1,9 +1,11 @@
+using Newtonsoft.Json;
+
 namespace Doji.PackageAuthoring.Wizards.Templates {
     /// <summary>
-    /// Builds a GitHub Actions workflow that signs and releases a generated UPM package.
+    /// Connects generated package releases to the centrally maintained signing workflow.
     /// </summary>
     internal static class SignUpmPackageWorkflowTemplate {
-        private const string PackageNameToken = "__PACKAGE_NAME__";
+        private const string PackagePathToken = "__PACKAGE_PATH__";
 
         public static string GetContent(string packageName) {
             return @"name: Sign and release
@@ -18,67 +20,14 @@ permissions:
 
 jobs:
   sign:
-    name: Sign UPM package
-    runs-on: ubuntu-latest
-    env:
+    uses: julienkay/tools.doji.package-authoring/.github/workflows/sign-upm-package.yml@master
+    with:
+      package-path: __PACKAGE_PATH__
+    secrets:
       UPM_SERVICE_ACCOUNT_KEY_ID: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_ID }}
       UPM_SERVICE_ACCOUNT_KEY_SECRET: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_SECRET }}
       UPM_ORG_ID: ${{ secrets.UPM_ORG_ID }}
-      DIST_DIR: /tmp/signed-upm-dist
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7.0.1
-
-      - name: Read package metadata
-        run: |
-          package_name=""$(jq -r '.name' __PACKAGE_NAME__/package.json)""
-          package_version=""$(jq -r '.version' __PACKAGE_NAME__/package.json)""
-
-          echo ""PACKAGE_NAME=$package_name"" >> ""$GITHUB_ENV""
-          echo ""PACKAGE_VERSION=$package_version"" >> ""$GITHUB_ENV""
-
-          printf 'Package name: %s\n' ""$package_name""
-          printf 'Package version: %s\n' ""$package_version""
-
-      - name: Install Unity UPM CLI
-        run: |
-          curl -fsSL https://cdn.packages.unity.com/upm-cli/install.sh -o install.sh
-          bash install.sh
-          echo ""$HOME/.upm/bin"" >> ""$GITHUB_PATH""
-
-      - name: Verify Unity UPM CLI
-        run: upm --help
-
-      - name: Sign package
-        run: |
-          mkdir -p ""$DIST_DIR""
-          upm pack ./__PACKAGE_NAME__ --organization-id ""$UPM_ORG_ID"" --destination ""$DIST_DIR""
-
-      - name: Print signed package info
-        run: |
-          shopt -s nullglob
-          archives=(""$DIST_DIR""/*.tgz ""$DIST_DIR""/*.tar.gz)
-          if [ ""${#archives[@]}"" -ne 1 ]; then
-            printf 'Expected exactly one signed package archive, found %s\n' ""${#archives[@]}"" >&2
-            exit 1
-          fi
-
-          archive=""${archives[0]}""
-          tar -tzf ""$archive"" | grep -qx 'package/package.json'
-          tar -tzf ""$archive"" | grep -qx 'package/.attestation.p7m'
-
-          echo ""PACKAGE_ARCHIVE=$archive"" >> ""$GITHUB_ENV""
-          printf 'Archive: %s\n' ""$(basename ""$archive"")""
-          tar -xOzf ""$archive"" package/package.json | jq '{name, version}'
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            /tmp/signed-upm-dist/*.tgz
-            /tmp/signed-upm-dist/*.tar.gz
-".Replace(PackageNameToken, packageName);
+".Replace(PackagePathToken, JsonConvert.SerializeObject(packageName));
         }
     }
 }

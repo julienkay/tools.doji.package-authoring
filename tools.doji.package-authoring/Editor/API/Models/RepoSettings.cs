@@ -34,7 +34,7 @@ namespace Doji.PackageAuthoring.Models {
         public bool IncludeReadme { get; set; } = true;
 
         /// <summary>
-        /// Whether to generate a GitHub Actions workflow that signs and releases the package on version tags.
+        /// Whether to generate a GitHub Actions caller for the shared package signing and release workflow.
         /// </summary>
         [field: SerializeField]
         public bool CreateSignUpmPackageWorkflow { get; set; }

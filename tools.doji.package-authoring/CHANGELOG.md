@@ -7,6 +7,10 @@ and this package adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- Generated package release workflows call the shared signing workflow instead of duplicating its implementation in every repository.
+
 ## [1.0.4] - 2026-10-29
 
 ### Fixed

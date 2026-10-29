@@ -196,6 +196,22 @@ When enabled, the wizard creates a repository root `README.md` using the reposit
 
 This is separate from the package README toggle in `Package Definition`.
 
+### Create 'Sign UPM package' GitHub workflow
+
+When enabled, the wizard creates `.github/workflows/ci.yml` to handle tag pushes. This small caller passes the generated package folder to the shared signing and release workflow at `julienkay/tools.doji.package-authoring/.github/workflows/sign-upm-package.yml@master`.
+
+Make these GitHub Actions secrets available to the generated repository:
+
+- `UPM_SERVICE_ACCOUNT_KEY_ID`
+- `UPM_SERVICE_ACCOUNT_KEY_SECRET`
+- `UPM_ORG_ID`
+
+The caller grants `contents: write` and forwards these secrets explicitly. The shared workflow signs the package, verifies its archive, and attaches it to the GitHub Release for the tag.
+
+Each repository still needs the small caller file. The signing implementation is maintained centrally, so changes on `master` apply to future runs without copying updated steps into every package repository. To freeze the implementation, replace `@master` in the generated `uses` reference with a commit SHA or a release tag that contains the shared workflow.
+
+When disabled, no release workflow is generated.
+
 ### Open Source License
 
 This controls the generated `LICENSE` file at the repository root.

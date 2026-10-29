@@ -13,6 +13,37 @@ namespace Doji.PackageAuthoring.Tests {
             "Doji.PackageAuthoring.Wizards.Presets.ProjectTemplateStorage",
             true);
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void GeneratePackage_WritesSharedReleaseWorkflowCallerOnlyWhenEnabled(bool createWorkflow) {
+            PackageSettings packageSettings = CreatePackageSettings(string.Empty, string.Empty);
+            packageSettings.PackageName = "tools.doji.tests.shared-release";
+            RepoSettings repoSettings = CreateRepoSettings();
+            repoSettings.CreateSignUpmPackageWorkflow = createWorkflow;
+
+            string rootDirectory = PackageAuthoringApi.GeneratePackage(
+                CreateProjectSettings("Shared Release Companion"), packageSettings, repoSettings);
+            string workflowPath = Path.Combine(rootDirectory, ".github", "workflows", "ci.yml");
+            Assert.That(File.Exists(workflowPath), Is.EqualTo(createWorkflow));
+            if (!createWorkflow) {
+                return;
+            }
+
+            string workflow = File.ReadAllText(workflowPath).Replace("\r\n", "\n");
+            Assert.That(workflow, Does.Contain("push:\n    tags:"));
+            Assert.That(workflow, Does.Contain("contents: write"));
+            Assert.That(workflow, Does.Contain(
+                "uses: julienkay/tools.doji.package-authoring/.github/workflows/sign-upm-package.yml@master"));
+            Assert.That(workflow, Does.Contain("package-path: \"tools.doji.tests.shared-release\""));
+            foreach (string secret in new[] { "UPM_SERVICE_ACCOUNT_KEY_ID", "UPM_SERVICE_ACCOUNT_KEY_SECRET", "UPM_ORG_ID" }) {
+                Assert.That(workflow, Does.Contain($"{secret}: ${{{{ secrets.{secret} }}}}"));
+            }
+            Assert.That(workflow, Does.Not.Contain("__PACKAGE_PATH__"));
+            Assert.That(workflow, Does.Not.Contain("runs-on:"));
+            Assert.That(workflow, Does.Not.Contain("steps:"));
+            Assert.That(workflow, Does.Not.Contain("upm pack"));
+        }
+
         [Test]
         public void GeneratePackage_ResolvesTokenizedTemplateFiles() {
             ProjectSettings projectSettings = CreateProjectSettings("Tokenized Companion");
