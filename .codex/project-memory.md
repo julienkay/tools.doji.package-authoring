@@ -56,7 +56,9 @@
 ## Generated Output Expectations
 
 - `ProjectCreationWizard` generates a fresh Unity project from the scaffold it owns and then applies project metadata.
+- Generated projects preserve the local asset dependencies of `GraphicsSettings.asset` and `QualitySettings.asset`, including pipeline assets, renderers, global settings, volume profiles, and matching file/folder `.meta` files. Rendering package resources remain package-owned. Do not copy rendering settings without their referenced assets.
 - `PackageCreationWizard` generates a repository with a UPM package folder, optional docs/samples/editor/tests folders, a companion sample project, and generated metadata such as `README.md`, `LICENSE`, manifests, asmdefs, and related template outputs.
+- When Git initialization is enabled for a new repository, a bounded headless Unity import resolves the final companion manifest before the initial commit. Auto-open is independent. Initialization failure or cancellation leaves generated files without an initial commit; existing Git repositories skip this initialization pass.
 
 ## Persistence Guidance
 

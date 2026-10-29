@@ -7,6 +7,13 @@ and this package adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-10-29
+
+### Fixed
+
+- Preserve render pipeline assets, renderers, volume profiles, and their Unity metadata in generated standalone and companion projects so URP settings retain valid asset references.
+- Resolve and import generated companion projects before Git initialization so their package lockfile is included in the initial commit, including when auto-open is disabled.
+
 ## [1.0.3] - 2026-10-20
 
 ### Added

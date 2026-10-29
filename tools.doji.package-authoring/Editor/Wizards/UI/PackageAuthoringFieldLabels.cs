@@ -144,7 +144,7 @@ namespace Doji.PackageAuthoring.Wizards.UI {
             public static GUIContent InitializeGitRepository { get; } =
                 EditorGUIUtility.TrTextContent(
                     "Initialize Git Repository",
-                    "Controls whether the generated repository runs git init and creates an initial commit. Git must be installed and available on PATH for this step to succeed.");
+                    "Resolves and imports the companion project before creating its initial Git commit, including the package lockfile. This can take several minutes and runs even when auto-open is off. Git must be installed and available on PATH.");
         }
     }
 }

@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using Doji.PackageAuthoring.Models;
 using Doji.PackageAuthoring.Wizards.Templates;
+using UnityEditor;
 using UnityEngine;
 using static Doji.PackageAuthoring.Utilities.GuidUtility;
 
@@ -102,6 +104,7 @@ namespace Doji.PackageAuthoring.Wizards {
             Directory.CreateDirectory(Path.Combine(projectDirectory, "Assets"));
             CopyPackagesBaseline(Path.Combine(projectDirectory, "Packages"));
             CopyProjectSettingsBaseline(Path.Combine(projectDirectory, "ProjectSettings"));
+            CopyRenderingAssetsBaseline(projectDirectory);
 
             if (!string.IsNullOrWhiteSpace(gitIgnoreContent)) {
                 CreateFile(Path.Combine(projectDirectory, ".gitignore"), gitIgnoreContent);
@@ -147,6 +150,46 @@ namespace Doji.PackageAuthoring.Wizards {
         /// <param name="destinationDir">Destination <c>ProjectSettings</c> directory in the generated project.</param>
         public static void CopyProjectSettingsBaseline(string destinationDir) {
             CopyDirectory("ProjectSettings", destinationDir, ShouldCopyProjectSettingsPath);
+        }
+
+        /// <summary>
+        /// Preserves the asset graph referenced by the copied rendering settings so generated projects retain their
+        /// pipelines, renderers, renderer features, and volume profiles without inheriting unrelated host assets.
+        /// </summary>
+        private static void CopyRenderingAssetsBaseline(string projectDirectory) {
+            HashSet<string> referencedAssets = new(StringComparer.Ordinal);
+            foreach (string settingsFile in new[] { "GraphicsSettings.asset", "QualitySettings.asset" }) {
+                string settingsPath = Path.Combine(projectDirectory, "ProjectSettings", settingsFile);
+                if (!File.Exists(settingsPath)) {
+                    continue;
+                }
+
+                // ProjectSettings files are not imported assets, so resolve their GUIDs before asking for dependencies.
+                foreach (Match match in Regex.Matches(File.ReadAllText(settingsPath), @"guid:\s*([a-fA-F0-9]{32})")) {
+                    string assetPath = AssetDatabase.GUIDToAssetPath(match.Groups[1].Value);
+                    if (!string.IsNullOrEmpty(assetPath)) {
+                        referencedAssets.Add(assetPath);
+                    }
+                }
+            }
+
+            foreach (string assetPath in AssetDatabase.GetDependencies(new List<string>(referencedAssets).ToArray())) {
+                // Package assets remain owned by the packages installed through the generated manifest.
+                if (!assetPath.StartsWith("Assets/", StringComparison.Ordinal) || !File.Exists(assetPath)) {
+                    continue;
+                }
+
+                string destinationPath = Path.Combine(projectDirectory, assetPath);
+                Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
+                CopyFile(assetPath, destinationPath);
+                CopyFile($"{assetPath}.meta", $"{destinationPath}.meta");
+
+                string folderPath = Path.GetDirectoryName(assetPath);
+                while (!string.IsNullOrEmpty(folderPath) && folderPath != "Assets") {
+                    CopyFile($"{folderPath}.meta", Path.Combine(projectDirectory, $"{folderPath}.meta"));
+                    folderPath = Path.GetDirectoryName(folderPath);
+                }
+            }
         }
 
         /// <summary>

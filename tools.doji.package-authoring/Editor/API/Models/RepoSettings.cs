@@ -21,6 +21,8 @@ namespace Doji.PackageAuthoring.Models {
 
         /// <summary>
         /// Whether generated repositories should be initialized as git repositories.
+        /// Unity first resolves and imports the companion project so its lockfile is included in the initial commit,
+        /// even when auto-open is disabled. This can take several minutes.
         /// </summary>
         [field: SerializeField]
         public bool InitializeGitRepository { get; set; } = true;

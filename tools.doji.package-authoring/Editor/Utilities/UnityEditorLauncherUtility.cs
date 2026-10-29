@@ -24,25 +24,19 @@ namespace Doji.PackageAuthoring.Utilities {
                 return false;
             }
 
-#if UNITY_EDITOR_OSX
-            return TryOpenProjectOnMac(projectPath);
-#elif UNITY_EDITOR_WIN
-            return TryOpenProjectWithExecutable(EditorApplication.applicationPath, projectPath);
-#else
-            return TryOpenProjectWithExecutable(ResolveEditorExecutablePath(), projectPath);
-#endif
+            return TryOpenProjectWithExecutable(ResolveCurrentEditorExecutablePath(), projectPath);
         }
 
         /// <summary>
-        /// Resolves the running Unity app bundle to its launchable executable on macOS and starts it with
-        /// a <c>-projectPath</c> argument.
+        /// Shares the current editor executable between interactive launch and headless project initialization.
         /// </summary>
-        private static bool TryOpenProjectOnMac(string projectPath) {
+        internal static string ResolveCurrentEditorExecutablePath() {
             string applicationPath = EditorApplication.applicationPath;
-            string editorExecutablePath = ResolveMacEditorExecutablePath(applicationPath);
-            Debug.Log(
-                $"Resolving macOS Unity editor launch path. applicationPath='{applicationPath}', executablePath='{editorExecutablePath}', projectPath='{projectPath}'.");
-            return TryOpenProjectWithExecutable(editorExecutablePath, projectPath);
+#if UNITY_EDITOR_OSX
+            return ResolveMacEditorExecutablePath(applicationPath);
+#else
+            return File.Exists(applicationPath) ? applicationPath : ResolveEditorExecutablePath();
+#endif
         }
 
         /// <summary>

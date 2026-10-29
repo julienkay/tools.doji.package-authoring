@@ -1,6 +1,6 @@
 {
   "name": "tools.doji.package-authoring",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "unity": "6000.0",
   "unityRelease": "0f1",
   "displayName": "UPM Package Authoring",

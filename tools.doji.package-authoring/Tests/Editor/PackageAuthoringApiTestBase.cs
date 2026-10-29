@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using Doji.PackageAuthoring.Models;
 using NUnit.Framework;
@@ -8,15 +7,23 @@ namespace Doji.PackageAuthoring.Tests {
     /// Provides shared temp-output and settings helpers for package authoring API regression tests.
     /// </summary>
     internal abstract class PackageAuthoringApiTestBase {
+        // Leave room for Unity's deep package-cache paths on Windows.
         protected string TempRoot { get; } = Path.Combine(
             Path.GetTempPath(),
-            "Doji.PackageAuthoring.Tests",
-            Guid.NewGuid().ToString("N"));
+            "DPA",
+            Path.GetRandomFileName());
 
         [TearDown]
         public void TearDown() {
             if (!Directory.Exists(TempRoot)) {
                 return;
+            }
+
+            foreach (string filePath in Directory.EnumerateFiles(TempRoot, "*", SearchOption.AllDirectories)) {
+                FileAttributes attributes = File.GetAttributes(filePath);
+                if ((attributes & FileAttributes.ReadOnly) != 0) {
+                    File.SetAttributes(filePath, attributes & ~FileAttributes.ReadOnly);
+                }
             }
 
             Directory.Delete(TempRoot, true);

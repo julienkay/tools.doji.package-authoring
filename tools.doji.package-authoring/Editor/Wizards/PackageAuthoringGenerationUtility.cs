@@ -118,6 +118,10 @@ namespace Doji.PackageAuthoring.Wizards {
             CreateRootFiles(rootDirectory, context, projectSettings, repoSettings);
 
             if (repoSettings.InitializeGitRepository) {
+                if (!Directory.Exists(Path.Combine(rootDirectory, ".git"))) {
+                    GeneratedProjectInitializationUtility.Initialize(projectDirectory);
+                }
+
                 string repositoryUrl = TemplateTokenResolver.Resolve(repoSettings.RepositoryUrl, context);
                 GitUtility.InitializeRepository(rootDirectory, repositoryUrl);
             }
